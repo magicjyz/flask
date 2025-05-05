@@ -8,3 +8,4 @@ numpy==1.26.4
 pandas==2.2.3
 requests==2.32.3
 pepfunn @ git+https://github.com/novonordisk-research/pepfunn.git@d52f0cf24c758a9c678bf0dd2a4ac4a3b00b7a6b
+gunicorn
