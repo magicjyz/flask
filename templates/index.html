@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <title>多肽设计平台</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+<!-- 顶部导航栏 -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="#">多肽设计平台</a>
+    <div class="collapse navbar-collapse">
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item"><a class="nav-link" href="#" onclick="showModule('module1')">多肽库生成</a></li>
+        <li class="nav-item"><a class="nav-link" href="#" onclick="showModule('module2')">环形肽链设计</a></li>
+        <li class="nav-item"><a class="nav-link" href="#" onclick="showModule('module3')">固定骨架肽链设计</a></li>
+        <li class="nav-item"><a class="nav-link" href="#" onclick="showModule('module4')">从头设计肽链</a></li>
+        <li class="nav-item"><a class="nav-link" href="#" onclick="showModule('module5')">综合分析</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<!-- 模块功能 -->
+<div class="container mt-4">
+  {% with messages = get_flashed_messages() %}
+    {% if messages %}
+      <div class="alert alert-info">
+        {% for message in messages %}
+          {{ message }}
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  <!-- 模块1：肽库生成 -->
+  <div id="module1" class="module {% if active_module == 'module1' %}d-block{% else %}d-none{% endif %}">
+    <h3>模块1：多肽库生成</h3>
+    <form action="/upload/module1" method="post" enctype="multipart/form-data">
+      <div class="mb-3">
+        <label class="form-label">上传FASTA文件</label>
+        <input type="file" name="file" class="form-control" accept=".fasta,.fa,.txt" required>
+      </div>
+      <div class="mb-3">
+        <a href="/download/example" class="btn btn-outline-secondary">下载示例FASTA文件</a>
+      </div>
+      
+      <button type="submit" class="btn btn-primary">上传</button>
+      {% if uploaded_filename %}
+        <div class="mt-2 text-success">已上传文件：{{ uploaded_filename }}</div>
+      {% endif %}
+    </form>
+  
+    <!-- 显示上传的序列，并允许填写突变位点 -->
+    {% if sequences %}
+      <div class="mt-4">
+        <h5>上传的肽链：</h5>
+        <ul>
+          {% for seq in sequences %}
+            <li>{{ seq }}</li>
+          {% endfor %}
+        </ul>
+  
+        <!-- 提交突变位点 -->
+        <form action="/generate/module1" method="post">
+          <input type="hidden" name="file_path" value="{{ uploaded_filename }}">
+        
+          <div class="mb-3">
+            <label class="form-label">选择突变模式：</label>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="mutation_mode" id="modeAll" value="all" checked>
+              <label class="form-check-label" for="modeAll">全部位置突变</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="mutation_mode" id="modeRandom" value="random">
+              <label class="form-check-label" for="modeRandom">随机突变</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="mutation_mode" id="modeCustom" value="custom">
+              <label class="form-check-label" for="modeCustom">指定位置突变</label>
+            </div>
+          </div>
+        
+          <div class="mb-3" id="customPositionsDiv" style="display: none;">
+            <label class="form-label">输入突变位置（用逗号分隔）</label>
+            <input type="text" name="positions" class="form-control" placeholder="例如：3,5,7">
+          </div>
+        
+          <button type="submit" class="btn btn-primary">生成突变肽库</button>
+        </form>
+      </div>
+    {% endif %}
+  
+    <!-- 显示结果 -->
+    {% if result %}
+      <div class="alert alert-success mt-4">
+        <strong>分析结果：</strong><br>
+        {{ result|safe }}
+      </div>
+    {% endif %}
+  
+    <!-- 下载链接 -->
+    {% if download_link %}
+      <a class="btn btn-success mt-2" href="{{ download_link }}">下载CSV结果</a>
+    {% endif %}
+  </div>
+  
+  <!-- 脚本：切换上传区域显示 -->
+  <script>
+    document.querySelectorAll('input[name="mutation_mode"]').forEach((radio) => {
+      radio.addEventListener('change', function () {
+        const customDiv = document.getElementById('customPositionsDiv');
+        customDiv.style.display = this.value === 'custom' ? 'block' : 'none';
+      });
+    });
+  </script>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  function showModule(id) {
+    document.querySelectorAll('.module').forEach(m => m.classList.add('d-none'));
+    document.getElementById(id).classList.remove('d-none');
+  }
+
+  function toggleFileUpload() {
+    const mode = document.getElementById('modeSelect').value;
+    const fileInput = document.getElementById('fileInputContainer');
+    if (mode === 'upload') {
+      fileInput.classList.remove('d-none');
+    } else {
+      fileInput.classList.add('d-none');
+    }
+  }
+</script>
+</body>
+</html>
